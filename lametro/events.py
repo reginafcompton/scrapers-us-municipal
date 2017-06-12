@@ -46,6 +46,14 @@ class LametroEventScraper(LegistarAPIEventScraper):
             e.pupa_id = str(event['EventId'])
 
             for item in self.agenda(event):
+
+                # This only scrapes event agendas from events that were updated "x" days ago.
+                # https://github.com/opencivicdata/python-legistar-scraper/blob/master/legistar/events.py#L135
+                # We want to scrape event agenda items if *the agenda* was updated, regardless of the event...so looking at the <EventItemLastModifiedUtc>, e.g., http://webapi.legistar.com/v1/metro/events/915/eventitems
+
+                # However: that would not solve the problem of getting the urls to agendas...since that link resides in this variable <EventAgendaFile>, which resides on the events page: http://webapi.legistar.com/v1/metro/events
+                # Are we decoupling the scrape of <EventAgendaFile> from the event itself? (See below: line 73....something that would scrape )
+
                 agenda_item = e.add_agenda_item(item["EventItemTitle"])
                 if item["EventItemMatterFile"]:
                     identifier = item["EventItemMatterFile"]
@@ -73,6 +81,7 @@ class LametroEventScraper(LegistarAPIEventScraper):
                                media_type="application/pdf")
 
             # Update 'e' with data from https://metro.legistar.com/Calendar.aspx, if that data exists.
+    
             if web_event['Audio'] != 'Not\xa0available':
 
                 redirect_url = self.head(web_event['Audio']['url']).headers['Location']
